@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropYield AI — Smart Crop Yield Prediction</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌾</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌾</text></svg>">
+    <meta name="description" content="AI-powered crop yield prediction system using machine learning. Predict agricultural yields based on location, crop type, weather, and soil conditions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ── Reset & Base ─────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --border: rgba(99, 179, 109, 0.15);
+            --border-focus: rgba(99, 179, 109, 0.5);
+            --accent: #4ade80;
+            --accent-dim: #22c55e;
+            --accent-glow: rgba(74, 222, 128, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            --info: #60a5fa;
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ── Animated Background ──────────────────────────── */
+        .bg-grid {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(74, 222, 128, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+        }
+
+        .bg-grid::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: linear-gradient(rgba(74, 222, 128, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(74, 222, 128, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* ── Floating orbs & Plant Background ─────────────── */
+        .orb {
+            position: fixed; border-radius: 50%; filter: blur(80px);
+            opacity: 0.35; pointer-events: none; z-index: 0;
+            animation: float 20s ease-in-out infinite;
+        }
+        .orb-1 { width: 400px; height: 400px; background: rgba(74,222,128,0.12); top: -10%; left: -5%; animation-delay: 0s; }
+        .orb-2 { width: 350px; height: 350px; background: rgba(16,185,129,0.1); bottom: -10%; right: -5%; animation-delay: -7s; }
+        .orb-3 { width: 250px; height: 250px; background: rgba(34,197,94,0.08); top: 40%; right: 20%; animation-delay: -14s; }
+
+        .bg-plant {
+            position: fixed; bottom: -10vh; right: -5vw;
+            font-size: 80vh; line-height: 1; opacity: 0.04;
+            z-index: 0; pointer-events: none; user-select: none;
+            transform: rotate(-15deg);
+            filter: drop-shadow(0 0 20px rgba(74,222,128,0.3));
+        }
+
+        .bg-plant-left {
+            position: fixed; top: 5vh; left: -10vw;
+            font-size: 60vh; line-height: 1; opacity: 0.02;
+            z-index: 0; pointer-events: none; user-select: none;
+            transform: rotate(25deg) scaleX(-1);
+            filter: blur(5px);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* ── Layout ───────────────────────────────────────── */
+        .container {
+            position: relative; z-index: 1;
+            max-width: 1100px; margin: 0 auto;
+            padding: 40px 24px 60px;
+        }
+
+        /* ── Header ───────────────────────────────────────── */
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .logo {
+            display: inline-flex; align-items: center; gap: 12px;
+            margin-bottom: 16px;
+        }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--accent), #10b981);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 30px rgba(74,222,128,0.25);
+        }
+        .logo-text {
+            font-size: 28px; font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #86efac);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        header p {
+            color: var(--text-secondary);
+            font-size: 16px; max-width: 520px;
+            margin: 0 auto;
+        }
+
+        /* ── Glassmorphism Card ────────────────────────────── */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: rgba(99, 179, 109, 0.3); }
+        .card-title {
+            font-size: 18px; font-weight: 700;
+            margin-bottom: 28px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-title span { font-size: 20px; }
+
+        /* ── Form Grid ────────────────────────────────────── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full-width { grid-column: 1 / -1; }
+
+        label {
+            font-size: 13px; font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.6px;
+        }
+
+        select, input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit; font-size: 15px;
+            outline: none;
+            transition: border-color 0.25s, box-shadow 0.25s;
+            -webkit-appearance: none; appearance: none;
+        }
+        select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; }
+        select:focus, input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        input::placeholder { color: var(--text-muted); }
+
+        /* ── Predict Button ───────────────────────────────── */
+        .btn-predict {
+            margin-top: 12px;
+            width: 100%;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, var(--accent-dim), #10b981);
+            color: #022c22; font-family: inherit;
+            font-size: 16px; font-weight: 700;
+            border: none; border-radius: var(--radius-sm);
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: transform 0.15s, box-shadow 0.25s;
+            position: relative; overflow: hidden;
+        }
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(74, 222, 128, 0.3);
+        }
+        .btn-predict:active { transform: translateY(0); }
+        .btn-predict:disabled {
+            opacity: 0.6; cursor: not-allowed;
+            transform: none; box-shadow: none;
+        }
+
+        /* shimmer animation on button */
+        .btn-predict::after {
+            content: '';
+            position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s;
+        }
+        .btn-predict:hover::after { left: 100%; }
+
+        /* ── Result Section ───────────────────────────────── */
+        .result-section {
+            margin-top: 32px;
+            display: none;
+            animation: fadeUp 0.5s ease;
+        }
+        .result-section.visible { display: block; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, rgba(74,222,128,0.08), rgba(16,185,129,0.04));
+            border: 1px solid rgba(74,222,128,0.25);
+            border-radius: var(--radius);
+            padding: 32px;
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 13px; font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .result-value {
+            font-size: 52px; font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #86efac);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+        }
+        .result-unit {
+            font-size: 16px; color: var(--text-secondary); margin-top: 4px;
+        }
+
+        /* ── Meta grid ────────────────────────────────────── */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-top: 24px;
+        }
+        .meta-item {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px; text-align: center;
+        }
+        .meta-item .mi-label {
+            font-size: 11px; font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.8px;
+            margin-bottom: 4px;
+        }
+        .meta-item .mi-value {
+            font-size: 16px; font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* ── Error ────────────────────────────────────────── */
+        .error-msg {
+            margin-top: 16px; padding: 14px 20px;
+            background: rgba(248,113,113,0.08);
+            border: 1px solid rgba(248,113,113,0.3);
+            border-radius: var(--radius-sm);
+            color: var(--danger); font-size: 14px;
+            display: none;
+        }
+        .error-msg.visible { display: block; }
+
+        /* ── Info strip ───────────────────────────────────── */
+        .info-strip {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .info-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        .info-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 179, 109, 0.35);
+        }
+        .info-card .ic-icon { font-size: 32px; margin-bottom: 10px; }
+        .info-card .ic-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .info-card .ic-desc { font-size: 13px; color: var(--text-secondary); }
+
+        /* ── Metrics Grid ─────────────────────────────────── */
+        .metrics-section {
+            margin-top: 48px;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(74, 222, 128, 0.02));
+            border: 1px solid rgba(74,222,128,0.2);
+            border-radius: var(--radius-sm);
+            padding: 24px;
+            text-align: center;
+        }
+        .metric-card .mc-label {
+            font-size: 13px; font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .metric-card .mc-value {
+            font-size: 28px; font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        /* ── Modal ────────────────────────────────────────── */
+        .modal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(10, 14, 23, 0.85); backdrop-filter: blur(8px);
+        }
+        .modal.visible { display: flex; align-items: center; justify-content: center; }
+        .modal-content {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 32px;
+            max-width: 700px; width: 90%; position: relative;
+            animation: fadeUp 0.3s ease;
+        }
+        .close-modal {
+            position: absolute; right: 24px; top: 24px;
+            color: var(--text-muted); font-size: 28px; font-weight: bold; cursor: pointer;
+        }
+        .close-modal:hover { color: var(--text-primary); }
+        .ensemble-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        .ensemble-table th, .ensemble-table td {
+            padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(99, 179, 109, 0.1);
+        }
+        .ensemble-table th { color: var(--text-secondary); font-size: 13px; text-transform: uppercase; }
+        .info-card.clickable { cursor: pointer; }
+        .info-card.clickable:hover { border-color: var(--accent); box-shadow: 0 0 15px rgba(74,222,128,0.1); }
+
+        /* ── Footer ───────────────────────────────────────── */
+        footer {
+            text-align: center;
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* ── Spinner ──────────────────────────────────────── */
+        .spinner {
+            display: inline-block; width: 18px; height: 18px;
+            border: 2.5px solid rgba(2, 44, 34, 0.3);
+            border-top-color: #022c22;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Responsive ───────────────────────────────────── */
+        @media (max-width: 640px) {
+            .container { padding: 24px 16px 40px; }
+            .card { padding: 24px 18px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .result-value { font-size: 40px; }
+            .meta-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-plant">🌿</div>
+    <div class="bg-plant-left">🌾</div>
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">🌾</div>
+                <span class="logo-text">CropYield AI</span>
+            </div>
+            <p>Predict agricultural crop yields using machine learning models trained on historical data, weather patterns, and soil conditions across Indian states.</p>
+        </header>
+
+        <!-- Prediction Form -->
+        <div class="card" id="form-card">
+            <div class="card-title"><span>📋</span> Prediction Parameters</div>
+            <form id="predict-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="crop">Crop</label>
+                        <select id="crop" required>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <select id="state" required>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="season">Season</label>
+                        <select id="season" required>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" min="1997" max="2030" value="2020" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="area">Area (hectares)</label>
+                        <input type="number" id="area" min="1" step="any" placeholder="e.g. 50000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fertilizer">Fertilizer (kg)</label>
+                        <input type="number" id="fertilizer" min="0" step="any" placeholder="e.g. 5000000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pesticide">Pesticide (kg)</label>
+                        <input type="number" id="pesticide" min="0" step="any" placeholder="e.g. 15000" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-predict" id="btn-predict">
+                    Predict Yield
+                </button>
+            </form>
+            <div class="error-msg" id="error-msg"></div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-section" id="result-section">
+            <div class="result-card">
+                <div class="result-label">Predicted Crop Yield</div>
+                <div class="result-value" id="result-value">—</div>
+                <div class="result-unit">tons per hectare</div>
+
+                <div class="meta-grid" id="meta-grid"></div>
+            </div>
+        </div>
+
+        <!-- Model Performance Metrics -->
+        <div class="metrics-section" id="metrics-section">
+            <div class="card-title"><span>📉</span> Model Performance Metrics</div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="mc-label">R² Score</div>
+                    <div class="mc-value" id="val-r2">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="mc-label">RMSE</div>
+                    <div class="mc-value" id="val-rmse">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="mc-label">MAE</div>
+                    <div class="mc-value" id="val-mae">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="info-strip">
+            <div class="info-card clickable" id="ml-ensemble-card" title="Click to view full model comparison metrics!">
+                <div class="ic-icon">🤖</div>
+                <div class="ic-title">ML Ensemble</div>
+                <div class="ic-desc">Random Forest, XGBoost &amp; LightGBM compared for best accuracy</div>
+            </div>
+            <div class="info-card">
+                <div class="ic-icon">🌦️</div>
+                <div class="ic-title">Weather Data</div>
+                <div class="ic-desc">State-level temperature, rainfall &amp; humidity (1997–2020)</div>
+            </div>
+            <div class="info-card">
+                <div class="ic-icon">🧪</div>
+                <div class="ic-title">Soil Analysis</div>
+                <div class="ic-desc">Nitrogen, Phosphorus, Potassium &amp; pH per state</div>
+            </div>
+            <div class="info-card">
+                <div class="ic-icon">📊</div>
+                <div class="ic-title">19K+ Records</div>
+                <div class="ic-desc">Historical crop production data across all Indian states</div>
+            </div>
+        </div>
+
+        <footer>
+            CropYield AI &mdash; Machine Learning Crop Yield Prediction System &copy; 2026
+        </footer>
+    </div>
+
+    <!-- Modal -->
+    <div id="ensemble-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <div class="card-title" style="margin-bottom: 20px;"><span>🤖</span> All Models Comparison</div>
+            <table class="ensemble-table">
+                <thead>
+                    <tr><th>Model</th><th>R² Score</th><th>RMSE</th><th>MAE</th></tr>
+                </thead>
+                <tbody id="ensemble-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ── DOM refs ─────────────────────────────────────────
+        const form       = document.getElementById('predict-form');
+        const btnPredict = document.getElementById('btn-predict');
+        const resultSec  = document.getElementById('result-section');
+        const resultVal  = document.getElementById('result-value');
+        const metaGrid   = document.getElementById('meta-grid');
+        const errorMsg   = document.getElementById('error-msg');
+
+        // ── Load initial data ────────────────────────────────
+        async function loadInitialData() {
+            try {
+                // Fetch form options
+                const resOpt = await fetch('http://127.0.0.1:5000/api/options');
+                const dataOpt = await resOpt.json();
+
+                populateSelect('crop', dataOpt.crops);
+                populateSelect('state', dataOpt.states);
+                populateSelect('season', dataOpt.seasons);
+
+                // Fetch metrics
+                const resMet = await fetch('http://127.0.0.1:5000/api/metrics');
+                if (resMet.ok) {
+                    const dataMet = await resMet.json();
+                    document.getElementById('val-r2').textContent = (dataMet.r2 * 100).toFixed(2) + '%';
+                    document.getElementById('val-rmse').textContent = dataMet.rmse.toFixed(2);
+                    document.getElementById('val-mae').textContent = dataMet.mae.toFixed(2);
+                    
+                    if (dataMet.all) {
+                        const tbody = document.getElementById('ensemble-tbody');
+                        tbody.innerHTML = '';
+                        dataMet.all.forEach(m => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td><strong>${m.name}</strong></td>
+                                <td style="color: var(--accent);">${(m.r2 * 100).toFixed(2)}%</td>
+                                <td>${m.rmse.toFixed(4)}</td>
+                                <td>${m.mae.toFixed(4)}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                }
+            } catch (e) {
+                showError('Failed to load initial data. Is the server running?');
+            }
+        }
+
+        function populateSelect(id, items) {
+            const sel = document.getElementById(id);
+            sel.innerHTML = '<option value="">— Select —</option>';
+            items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                sel.appendChild(opt);
+            });
+        }
+
+        // ── Submit prediction ────────────────────────────────
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+            resultSec.classList.remove('visible');
+
+            const payload = {
+                crop: document.getElementById('crop').value,
+                state: document.getElementById('state').value,
+                season: document.getElementById('season').value,
+                year: document.getElementById('year').value,
+                area: document.getElementById('area').value,
+                fertilizer: document.getElementById('fertilizer').value,
+                pesticide: document.getElementById('pesticide').value,
+            };
+
+            // Client-side validation
+            for (const [k, v] of Object.entries(payload)) {
+                if (!v) { showError(`Please fill in the "${k}" field.`); return; }
+            }
+
+            btnPredict.disabled = true;
+            btnPredict.innerHTML = '<span class="spinner"></span> Predicting...';
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError(data.error || 'Prediction failed.');
+                    return;
+                }
+
+                // Show result
+                resultVal.textContent = data.predicted_yield.toFixed(4);
+                metaGrid.innerHTML = '';
+
+                const meta = data.model_features;
+                const metaItems = [
+                    { label: 'Temperature', value: meta.temperature, icon: '🌡️' },
+                    { label: 'Rainfall', value: meta.rainfall, icon: '🌧️' },
+                    { label: 'Humidity', value: meta.humidity, icon: '💧' },
+                    { label: 'Soil N-P-K', value: meta.soil_npk, icon: '🧪' },
+                    { label: 'Soil pH', value: meta.soil_ph, icon: '⚗️' },
+                ];
+
+                metaItems.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'meta-item';
+                    div.innerHTML = `
+                        <div class="mi-label">${m.icon} ${m.label}</div>
+                        <div class="mi-value">${m.value}</div>
+                    `;
+                    metaGrid.appendChild(div);
+                });
+
+                resultSec.classList.add('visible');
+                resultSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            } catch (err) {
+                showError('Network error. Check the server.');
+            } finally {
+                btnPredict.disabled = false;
+                btnPredict.innerHTML = 'Predict Yield';
+            }
+        });
+
+        // ── Error helpers ────────────────────────────────────
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.add('visible');
+        }
+        function hideError() {
+            errorMsg.classList.remove('visible');
+        }
+
+        // ── Modal logic ──────────────────────────────────────
+        const modal = document.getElementById('ensemble-modal');
+        const btnModal = document.getElementById('ml-ensemble-card');
+        const spanClose = document.getElementById('close-modal');
+
+        btnModal.onclick = () => modal.classList.add('visible');
+        spanClose.onclick = () => modal.classList.remove('visible');
+        window.onclick = (e) => { if (e.target == modal) modal.classList.remove('visible'); };
+
+        // ── Init ─────────────────────────────────────────────
+        loadInitialData();
+    </script>
+</body>
+</html>
