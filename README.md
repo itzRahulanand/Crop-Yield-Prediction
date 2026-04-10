@@ -1,79 +1,104 @@
-# Crop-Yield-Prediction
-Predict agricultural crop yields using machine learning models trained on historical data, weather patterns, and soil conditions across Indian states.
+# Crop Yield Prediction System
 
-# 🌾 CropYield AI — Smart Crop Prediction System
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-2.x-000000?style=flat-square&logo=flask&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.x-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)
+![R2 Score](https://img.shields.io/badge/R2%20Score-94.72%25-2d6a4f?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
-A production-ready, end-to-end Machine Learning pipeline and Web Application designed to accurately forecast agricultural crop yields across Indian states. 
-
-By fusing massive historical agricultural datasets containing over 19,000 records with historical state-level **weather patterns** (temperature, rainfall, humidity) and **soil compositions** (Nitrogen, Phosphorous, Potassium, pH), this system implements an optimized ensemble architecture to achieve extremely high predictive accuracy.
-
-## 🚀 Key Features
-
-* **Advanced Data Fusion**: Dynamically merges isolated datasets—historical crop production, local climatic metrics (1997–2020), and soil N-P-K constraints—into a rich, multi-dimensional feature space.
-* **Ensemble ML Architecture**: Trains and evaluates multiple state-of-the-art algorithms simultaneously:
-  * **Random Forest Regressor** (Chosen best-performing model: **94.7%+ R² Score**)
-  * Histogram-based Gradient Boosting
-  * Gradient Boosting Regressor
-* **Automated Data Cleaning**: Features robust ETL preprocessing directly in the pipeline, stripping out dimensional anomalies (like nut-based vs. tonne-based yields) to collapse Mean Absolute Error (MAE).
-* **Premium Glassmorphism UI**: A fully responsive, dark-themed, interactive frontend built without any heavy CSS frameworks, communicating securely via a localized REST API wrapper.
-* **Real-time Live Inference**: Instantly cross-references the user's input against the stored datasets to assemble the required feature-vector and outputs the predicted yield alongside critical environmental metrics.
-
-## 💻 Tech Stack
-
-* **Machine Learning**: `scikit-learn`, `pandas`, `numpy`, `joblib`
-* **Backend Framework**: `Flask`, `Flask-CORS`
-* **Frontend**: Pure HTML5, Vanilla JavaScript, CSS3 (Modern Glassmorphism)
+An intelligent machine learning system designed to predict agricultural crop yields (tons per hectare) based on a comprehensive set of variables including location, crop variety, seasonal weather patterns, soil composition, and chemical inputs (fertilizers and pesticides).
 
 ---
 
-## 🛠️ Installation & Setup
+## Technical Overview
 
-Because this project uses a pre-trained serialized model (`model.pkl`), anyone pulling the repository can boot up the application in seconds without needing to retrain the pipeline!
+The system uses a Gradient Boosting regression engine trained on over 19,000 historical records from across India. It provides high-accuracy estimates by correlating multi-dimensional data points that traditionally impact agricultural production.
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/yourusername/cropyield-ai.git
-cd cropyield-ai
+### Core Prediction Parameters
+
+The model evaluates 14 critical features for every prediction:
+
+1.  **Temporal Data**: Year (captures long-term climate and technology trends).
+2.  **Land Metrics**: Area under cultivation (hectares).
+3.  **Chemical Inputs**: Fertilizer and Pesticide usage (kg).
+4.  **Climate Metrics**: Average Temperature (C), Total Rainfall (mm), and Humidity (%).
+5.  **Soil Composition**: Nitrogen (N), Phosphorus (P), Potassium (K), and Soil pH.
+6.  **Categorical Identifiers**: Crop type, Season, and State.
+
+---
+
+## Model Performance
+
+The system compares multiple ensemble models (Random Forest, HistGradientBoosting, and GradientBoosting) and automatically deploys the one with the highest R-squared value on the validation set.
+
+### Current Benchmarks
+
+| Metric | Value | Interpretation |
+| :--- | :--- | :--- |
+| **R-squared (R2)** | 94.72% | Model explains 94.7% of yield variance |
+| **Mean Absolute Error (MAE)** | 1.03 | Average prediction error is 1.03 tons/ha |
+| **Root Mean Squared Error (RMSE)** | 2.73 | Standard deviation of prediction residuals |
+
+*Note: Performance was optimized by implementing outlier detection to remove incompatible units (e.g. coconut nut counts) and anomalous yield values (>150).*
+
+---
+
+## Project Structure
+
+```text
+crop yield prediction/
+|-- app.py                      # Flask backend serving predictions
+|-- src/
+|   |-- main.py                 # Training pipeline (ETL + Model Selection)
+|-- crop_yield.csv              # Main production dataset (19,000+ records)
+|-- state_weather_data.csv      # Supplementary historical weather patterns
+|-- state_soil_data.csv         # Supplementary regional soil benchmarks
+|-- model.pkl                   # Serialized champion regressor
+|-- encoders.pkl                # Categorical label encoders
+|-- form_options.pkl            # Pre-computed dropdown options for UI
+|-- metrics.pkl                 # Cached performance metrics
+|-- templates/
+|   |-- index.html              # Responsive web interface
+|-- requirements.txt             # Project dependencies
 ```
 
-### 2. Create & Activate a Virtual Environment
-```bash
-# For macOS / Linux:
-python3 -m venv venv
-source venv/bin/activate
+---
 
-# For Windows:
-python -m venv venv
-venv\Scripts\activate
-```
+## Installation and Usage
 
-### 3. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+### Prerequisites
 
-### 4. Run the Web Server
-Launch the Flask backend wrapper:
+- Python 3.9 or higher
+- Pip package manager
+
+### Setup
+
+1.  Standardize your environment by installing required dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  (Optional) Run the training pipeline to regenerate the model using the latest data:
+    ```bash
+    python src/main.py
+    ```
+
+### Running the Web Application
+
+To launch the predictive interface:
+
 ```bash
 python app.py
 ```
-Open your browser and navigate to: 👉 `http://localhost:5000`
+
+The application will be accessible at `http://127.0.0.1:5000`.
 
 ---
 
-## 🔬 Model Retraining (Optional)
+## Machine Learning Workflow
 
-If you modify the core dataset `crop_yield.csv` or wish to tweak hyper-parameters, you can fire the entire data-preprocessing and model training pipeline from scratch:
-
-```bash
-python src/main.py
-```
-This script will:
-1. Reload, merge, and clean the 4 distinct CSV files.
-2. Label-encode categorical strings.
-3. Automatically evaluate Random Forest vs. Gradient Boosted trees.
-4. Export the single highest-accuracy model directly to `model.pkl` and `validators.pkl`.
-5. Dump the live metrics to `metrics.pkl` so the Web UI updates its dashboard instantly.
-
-## 📄 License
-This project is open-source and available under the [MIT License](LICENSE).
+1.  **Data Ingestion**: Merging production data with high-resolution weather and soil datasets via state-level keys.
+2.  **Preprocessing**: Handling missing values through targeted deletion and normalizing disparate units.
+3.  **Feature Engineering**: Label encoding categorical strings (Crop, Season, State) for numeric compatibility.
+4.  **Model Selection**: Training competing architectures and selecting the "Champion" based on minimizing MAE and maximizing R-squared scores.
+5.  **Artifact Generation**: Saving the trained model, feature scalers, and categorical mappings for sub-second inference in production.
