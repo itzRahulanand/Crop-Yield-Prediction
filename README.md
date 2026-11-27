@@ -1,104 +1,90 @@
-# Crop Yield Prediction System
+# Crop Yield Prediction
 
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-2.x-000000?style=flat-square&logo=flask&logoColor=white)
-![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.x-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)
-![R2 Score](https://img.shields.io/badge/R2%20Score-94.72%25-2d6a4f?style=flat-square)
+![Flask](https://img.shields.io/badge/Flask-Web%20App-000000?style=flat-square&logo=flask&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)
+![R2](https://img.shields.io/badge/R%C2%B2-0.947-2d6a4f?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
-An intelligent machine learning system designed to predict agricultural crop yields (tons per hectare) based on a comprehensive set of variables including location, crop variety, seasonal weather patterns, soil composition, and chemical inputs (fertilizers and pesticides).
+A machine learning web application that predicts crop yield (tons per hectare) for Indian states from crop, season, input-usage, weather and soil data.
 
----
+## Highlights
 
-## Technical Overview
+- **Explains 94.7% of yield variance (R² = 0.947, MAE = 1.03 t/ha)** on a held-out 20% test set by selecting the best of 3 ensemble regressors.
+- **Enriched 19,000+ production records (1997–2020)** by merging them with state-level weather and soil datasets, giving the model 14 input features.
+- **Improved data quality** by filtering out records in incompatible units (such as coconut counts) and anomalous yields above 150 t/ha before training.
+- **Serves predictions through a Flask web app**, with JSON endpoints for form options, model metrics and predictions.
 
-The system uses a Gradient Boosting regression engine trained on over 19,000 historical records from across India. It provides high-accuracy estimates by correlating multi-dimensional data points that traditionally impact agricultural production.
+## Model comparison
 
-### Core Prediction Parameters
+All models were trained on the same 80:20 train-test split (`random_state=42`). The model with the highest R² is saved automatically.
 
-The model evaluates 14 critical features for every prediction:
+| Model | R² | RMSE (t/ha) | MAE (t/ha) |
+|---|---|---|---|
+| **Gradient Boosting** (selected) | **0.947** | **2.73** | 1.03 |
+| HistGradientBoosting | 0.944 | 2.82 | 1.10 |
+| Random Forest | 0.942 | 2.86 | 0.81 |
 
-1.  **Temporal Data**: Year (captures long-term climate and technology trends).
-2.  **Land Metrics**: Area under cultivation (hectares).
-3.  **Chemical Inputs**: Fertilizer and Pesticide usage (kg).
-4.  **Climate Metrics**: Average Temperature (C), Total Rainfall (mm), and Humidity (%).
-5.  **Soil Composition**: Nitrogen (N), Phosphorus (P), Potassium (K), and Soil pH.
-6.  **Categorical Identifiers**: Crop type, Season, and State.
+## Features used
 
----
+| Group | Features |
+|---|---|
+| Categorical | Crop, Season, State |
+| Time and land | Year, Area (ha) |
+| Inputs | Fertilizer (kg), Pesticide (kg) |
+| Climate | Average temperature (°C), Annual rainfall (mm), Humidity (%) |
+| Soil | Nitrogen (N), Phosphorus (P), Potassium (K), pH |
 
-## Model Performance
-
-The system compares multiple ensemble models (Random Forest, HistGradientBoosting, and GradientBoosting) and automatically deploys the one with the highest R-squared value on the validation set.
-
-### Current Benchmarks
-
-| Metric | Value | Interpretation |
-| :--- | :--- | :--- |
-| **R-squared (R2)** | 94.72% | Model explains 94.7% of yield variance |
-| **Mean Absolute Error (MAE)** | 1.03 | Average prediction error is 1.03 tons/ha |
-| **Root Mean Squared Error (RMSE)** | 2.73 | Standard deviation of prediction residuals |
-
-*Note: Performance was optimized by implementing outlier detection to remove incompatible units (e.g. coconut nut counts) and anomalous yield values (>150).*
-
----
-
-## Project Structure
+## Project structure
 
 ```text
-crop yield prediction/
-|-- app.py                      # Flask backend serving predictions
-|-- src/
-|   |-- main.py                 # Training pipeline (ETL + Model Selection)
-|-- crop_yield.csv              # Main production dataset (19,000+ records)
-|-- state_weather_data.csv      # Supplementary historical weather patterns
-|-- state_soil_data.csv         # Supplementary regional soil benchmarks
-|-- model.pkl                   # Serialized champion regressor
-|-- encoders.pkl                # Categorical label encoders
-|-- form_options.pkl            # Pre-computed dropdown options for UI
-|-- metrics.pkl                 # Cached performance metrics
-|-- templates/
-|   |-- index.html              # Responsive web interface
-|-- requirements.txt             # Project dependencies
+Crop-Yield-Prediction/
+├── app.py                           # Flask server: UI + prediction API
+├── predict.py                       # Command-line prediction helper
+├── src/
+│   └── main.py                      # Training pipeline: merge data, train 3 models, save the best
+├── templates/
+│   └── index.html                   # Web interface
+├── crop_yield.csv                   # Production data (19,000+ rows)
+├── state_weather_data_1997_2020.csv # State-level weather data
+├── state_soil_data.csv              # State-level soil data
+├── model.pkl                        # Trained model
+├── encoders.pkl                     # Label encoders for categorical features
+├── feature_cols.pkl                 # Feature order used by the model
+├── form_options.pkl                 # Dropdown values for the UI
+├── metrics.pkl                      # Saved evaluation metrics
+└── requirements.txt
 ```
 
----
-
-## Installation and Usage
-
-### Prerequisites
-
-- Python 3.9 or higher
-- Pip package manager
-
-### Setup
-
-1.  Standardize your environment by installing required dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2.  (Optional) Run the training pipeline to regenerate the model using the latest data:
-    ```bash
-    python src/main.py
-    ```
-
-### Running the Web Application
-
-To launch the predictive interface:
+## Getting started
 
 ```bash
+git clone https://github.com/itzRahulanand/Crop-Yield-Prediction.git
+cd Crop-Yield-Prediction
+pip install -r requirements.txt
+
+# Optional: retrain the model
+python src/main.py
+
+# Start the web app
 python app.py
 ```
 
-The application will be accessible at `http://127.0.0.1:5000`.
+Then open http://127.0.0.1:5000 in your browser.
 
----
+## API
 
-## Machine Learning Workflow
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Web interface |
+| `GET` | `/api/options` | Valid crops, seasons and states for the form |
+| `GET` | `/api/metrics` | R², RMSE and MAE of the deployed model |
+| `POST` | `/predict` | Returns the predicted yield for the submitted inputs |
 
-1.  **Data Ingestion**: Merging production data with high-resolution weather and soil datasets via state-level keys.
-2.  **Preprocessing**: Handling missing values through targeted deletion and normalizing disparate units.
-3.  **Feature Engineering**: Label encoding categorical strings (Crop, Season, State) for numeric compatibility.
-4.  **Model Selection**: Training competing architectures and selecting the "Champion" based on minimizing MAE and maximizing R-squared scores.
-5.  **Artifact Generation**: Saving the trained model, feature scalers, and categorical mappings for sub-second inference in production.
+## Tech stack
+
+Python · pandas · NumPy · scikit-learn · Flask · HTML/CSS/JavaScript
+
+## License
+
+MIT. See [LICENSE](LICENSE).
